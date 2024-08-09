@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_id      String       @unique // This will be an email
+  first_name   String?
+  last_name    String?
+  avatar       String
+  accentColour String
+  memberships  Membership[]
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @default(now()) @updatedAt
+  auths        U2F[]
+  session      Session[]
+}
+
+model Membership {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user       User?    @relation(fields: [user_id], references: [id])
+  user_id    String?  @db.Uuid
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @default(now()) @updatedAt
+  company    Company? @relation(fields: [company_id], references: [id])
+  company_id String?  @db.Uuid
+}
+
+model Company {
+  id      String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name    String
+  members Membership[]
+}
+
+model Session {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  auth_id   String
+  user      User?    @relation(fields: [user_id], references: [id])
+  user_id   String?  @db.Uuid
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now()) @updatedAt
+}
+
+model U2F {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  alias         String
+  credential_id String
+  public_key    String
+  transports    String[]
+  user          User?    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  user_id       String?  @db.Uuid
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @default(now()) @updatedAt
+}
+
+model EmailVerify {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  code          Int      @unique
+  user_auth_id  String
+  credential_id String
+  transports    String[]
+  public_key    String
+  expiryAt      DateTime // Add this field
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([updatedAt], map: "EmailVerify_updatedAt")
+}
+
+model NoncePair {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nonce     String   @unique
+  data      String   @unique
+  expiryAt  DateTime // Add this field
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([updatedAt], map: "NoncePair_updatedAt")
+}

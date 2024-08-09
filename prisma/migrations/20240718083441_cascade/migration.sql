@@ -1,0 +1,5 @@
+-- DropForeignKey
+ALTER TABLE "U2F" DROP CONSTRAINT "U2F_user_id_fkey";
+
+-- AddForeignKey
+ALTER TABLE "U2F" ADD CONSTRAINT "U2F_user_id_fkey" FOREIGN KEY ("user_id") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE;
